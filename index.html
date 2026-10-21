@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Galaxia para Alexandra</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:ital,wght@0,200;0,300;0,400;0,600;1,300&family=Pinyon+Script&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020008;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-pinyon { font-family: 'Pinyon Script', cursive; }
+
+        /* Custom Glassmorphism UI */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(25, 10, 45, 0.85) 0%, rgba(10, 4, 25, 0.95) 100%);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 215, 128, 0.35);
+            box-shadow: 0 0 60px rgba(236, 72, 153, 0.35), inset 0 0 35px rgba(255, 215, 128, 0.15);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 215, 128, 0.35);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 215, 128, 0.2);
+            border-color: rgba(255, 215, 128, 0.7);
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .glass-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+
+        .animate-float {
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.5)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 35px rgba(236, 72, 153, 0.9)); }
+        }
+
+        .animate-glow {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(251, 191, 36, 0.4);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="relative flex items-center justify-center min-h-screen">
+
+    <!-- Canvas Principal de la Galaxia -->
+    <canvas id="galaxyCanvas" class="absolute inset-0 z-0 w-full h-full"></canvas>
+
+    <!-- UI Overlay Superior -->
+    <div class="absolute top-6 sm:top-8 left-0 right-0 z-10 text-center px-4 pointer-events-none flex flex-col items-center">
+        <span class="text-amber-200/70 font-cinzel text-xs sm:text-sm tracking-[0.35em] uppercase mb-1 drop-shadow">
+            ✦ Universo Infinito de Amor ✦
+        </span>
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-cinzel font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-pink-200 to-amber-300 drop-shadow-[0_0_35px_rgba(236,72,153,0.8)]">
+            Galaxia Alexandra
+        </h1>
+        <div class="h-[1px] w-36 sm:w-56 bg-gradient-to-r from-transparent via-amber-300/60 to-transparent my-2 sm:my-3"></div>
+        <p class="text-xs sm:text-sm font-light text-pink-200/90 tracking-widest uppercase max-w-md drop-shadow">
+            Explora el cosmos o toca una estrella para revelar una razón de mi amor
+        </p>
+    </div>
+
+    <!-- Controles Flotantes -->
+    <div class="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
+        <button id="resetCamBtn" class="glass-btn text-amber-200 px-4 py-2.5 rounded-full text-xs font-cinzel font-semibold tracking-wider flex items-center gap-2">
+            <svg class="w-4 h-4 fill-current text-amber-300" viewBox="0 0 24 24">
+                <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+            </svg>
+            Centrar Galaxia
+        </button>
+    </div>
+
+    <!-- Leyenda Táctil -->
+    <div class="absolute bottom-6 left-6 z-10 hidden sm:flex items-center gap-3 text-xs text-amber-100/70 font-light pointer-events-none">
+        <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span>
+            <span>Arrastrar: Navegar</span>
+        </div>
+        <span>•</span>
+        <span>Rueda / Pizca: Zoom</span>
+    </div>
+
+    <!-- Modal Emergente Glassmorphism -->
+    <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500 transform scale-95">
+        <div class="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-10 text-center relative border border-amber-300/40 shadow-2xl animate-float">
+            
+            <!-- Botón Cerrar -->
+            <button id="closeModal" class="absolute top-5 right-5 text-amber-200/70 hover:text-white p-2 rounded-full transition duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Emblema de Estrella -->
+            <div class="mx-auto w-16 h-16 mb-6 rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 p-[1.5px] shadow-[0_0_35px_rgba(251,191,36,0.7)] animate-glow flex items-center justify-center">
+                <div class="w-full h-full bg-slate-950/90 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 fill-current text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.9)]" viewBox="0 0 24 24">
+                        <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Título Modal -->
+            <span id="modalSub" class="text-xs font-cinzel tracking-[0.25em] text-pink-300/80 uppercase block mb-1">
+                Destello Eterno
+            </span>
+            <h3 id="modalTitle" class="text-2xl sm:text-3xl font-cinzel font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-pink-200 to-amber-100 mb-4">
+                Para Ale
+            </h3>
+
+            <!-- Divisor -->
+            <div class="flex items-center justify-center gap-2 my-2">
+                <div class="h-[1px] w-12 bg-amber-300/40"></div>
+                <span class="text-amber-300/80 text-xs">✦</span>
+                <div class="h-[1px] w-12 bg-amber-300/40"></div>
+            </div>
+
+            <!-- Mensaje -->
+            <p id="modalMessage" class="text-base sm:text-lg text-pink-100/95 font-light leading-relaxed my-5 min-h-[80px] flex items-center justify-center px-2">
+                <!-- Contenido Dinámico -->
+            </p>
+
+            <!-- Pie de Modal -->
+            <div class="mt-6 pt-5 border-t border-amber-300/20 flex flex-col items-center gap-1">
+                <span class="font-pinyon text-2xl sm:text-3xl text-amber-300">
+                    Eternamente tuyo
+                </span>
+                <span class="text-[10px] font-cinzel text-pink-200/60 tracking-widest uppercase">
+                    Sos la estrella más brillante de todo mi universo
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATOS Y FRASES ---
+        const centralStarData = {
+            title: "Ale: El Centro de Mi Universo",
+            message: "Vos no solo formas parte de mi mundo, sos el centro de todo el universo. Tu luz es la que ilumina todo mi camino y solo tu existencia hace que todo sea mas hermoso. TE AMO MAS ALLA DE LAS PALABRAS Y DE TODAS LAS GALAXIAS."
+        };
+
+        const phrases = [
+            "Amo tus ojos. Para mi son las 2 estrellas mas hermosas de este universo",
+            "Amo tu sonrisa. No hay cosa mas hermosa que mirarte sonreir porque esa sonrisa me alegra el dia entero",
+            "Amo tu presencia. Sos la luz de mi vida y por la que cada dia quiero ser mejor que ayer",
+            "Amo tu risa. Tu risa es la melodia mas hermosa que existe en todo el universo",
+            "Amo estar a tu lado. Cada día a tu lado es viajar por una galaxia de amor perfecto.",
+            "Amo tu belleza. Porque ni en la infinidad del espacio interestelar hay algo tan hermoso como vos",
+            "Amo tu existencia. Existen miles de planetas y de estrellas pero mi favorita simepre seras vos",
+            "Amo tu brillo. Ese brillo tan hermoso que hace que todas las estrellas incluso el sol sienta envidia de vos",
+            "Amo tu mirada. Esa mirada tan caracteristica tuya me transporta a un universo hermoso del que jamas quiero irme",
+            "Amo tu estancia, Gracias por estar conmigo y por iluminar mi camino, por mas oscuro que se ponga",
+            "Amo tu cariño y ternura. Porque me haces sentir amado, cuando mas lo nesesito y cuando siento que no soy nadie",
+            "Amo estar con vos. Porque cerca tuyo puede ver las estrellas y siento que puedo tocar el infinito",
+            "Te amo a vos. Porque ni un universo entero podria tener tantas cosas hermosas como las que tenes vos",
+            "Te amo a vos. Porque tu brillo es dulce, calido y hermoso",
+            "Amo tus abrazos. Porque son calidos, y siento que estoy seguro cuando estoy entre ellos",
+            "Amo tu dulzura. porque en este universo no hay mujer mas dulce y calida que vos",
+            "Amo lo hermoso que es tu ser. Porque mirarte es como contemplar el cosmos completo, ver las estrellas sin nesesidad de ver al cielo",
+            "Amo tu ser. Porque para mi es un poema completo, es el arte mas hermoso que Dios puedo crear",
+            "Te amo tanto mi niña. Este amor que siento por vos, sobre pasa la palabra te amo, va mas alla de las estrellas.",
+            "Amo como le das sentido a todo. Porque a pesar de las cosas, los tropiezos siempre estas ahi, siempre le das sentido a todo por muy simple que sea. Sera dificil bajarte una estrella, pero puedo programarte una galaxia para vos, yo se que en los confines del universo hay una galaxia sin nombre que algun dia nombrare y le pondre: Alexandra "
+        ];
+
+        // --- INICIALIZACIÓN DEL CANVAS ---
+        const canvas = document.getElementById('galaxyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, centerX, centerY;
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- CÁMARA E INTERACCIÓN SUAVE (LERP) ---
+        let zoom = 1.0;
+        let targetZoom = 1.0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let targetOffsetX = 0;
+        let targetOffsetY = 0;
+
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let velX = 0;
+        let velY = 0;
+
+        let hoveredStar = null;
+
+        // --- SIMULACIÓN GALÁCTICA ---
+
+        // 1. Nebulosas Procedimentales (JS Comments Corrected)
+        const nebulae = [];
+        const numNebulae = 8;
+        const colorsNebulae = [
+            'rgba(147, 51, 234, ',  // Violeta
+            'rgba(236, 72, 153, ',  // Rosa Neón
+            'rgba(79, 70, 229, ',   // Indigo
+            'rgba(245, 158, 11, '   // Ámbar Cálido
+        ];
+
+        for (let i = 0; i < numNebulae; i++) {
+            nebulae.push({
+                x: (Math.random() - 0.5) * 1800,
+                y: (Math.random() - 0.5) * 1800,
+                radius: Math.random() * 450 + 350,
+                color: colorsNebulae[i % colorsNebulae.length],
+                alpha: Math.random() * 0.16 + 0.08,
+                pulseSpeed: Math.random() * 0.001 + 0.0005
+            });
+        }
+
+        // 2. Fondo de Estrellas Lejanas
+        const bgStars = [];
+        const numBgStars = 650;
+        for (let i = 0; i < numBgStars; i++) {
+            bgStars.push({
+                x: (Math.random() - 0.5) * 3800,
+                y: (Math.random() - 0.5) * 3800,
+                size: Math.random() * 2.0 + 0.3,
+                alpha: Math.random() * 0.8 + 0.2,
+                twinkleSpeed: Math.random() * 0.03 + 0.005,
+                color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#fef08a' : '#f472b6')
+            });
+        }
+
+        // 3. Cometas
+        const comets = [];
+        function createComet() {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 1300;
+            comets.push({
+                x: Math.cos(angle) * dist,
+                y: Math.sin(angle) * dist,
+                vx: -Math.cos(angle + 0.3) * (Math.random() * 12 + 8),
+                vy: -Math.sin(angle + 0.3) * (Math.random() * 12 + 8),
+                length: Math.random() * 90 + 60,
+                size: Math.random() * 2.5 + 1.5,
+                alpha: 1,
+                decay: Math.random() * 0.015 + 0.008
+            });
+        }
+
+        // 4. Polvo y Espiral de Partículas
+        const spiralParticles = [];
+        const numSpiralParticles = 1800;
+        const arms = 3;
+
+        for (let i = 0; i < numSpiralParticles; i++) {
+            const distance = Math.pow(Math.random(), 1.6) * 580 + 50;
+            const armAngle = (i % arms) * ((2 * Math.PI) / arms);
+            const spiralAngle = distance * 0.006;
+            const angle = armAngle + spiralAngle + (Math.random() - 0.5) * 0.4;
+
+            let colorStr = 'rgba(254, 240, 138, ';
+            if (distance > 400) colorStr = 'rgba(129, 140, 248, ';
+            else if (distance > 220) colorStr = 'rgba(244, 114, 182, ';
+
+            spiralParticles.push({
+                distance: distance,
+                angle: angle,
+                speed: (0.0004 + (1 / distance) * 0.04) * 0.7,
+                size: Math.random() * 2.0 + 0.4,
+                color: colorStr,
+                alpha: Math.random() * 0.75 + 0.25
+            });
+        }
+
+        // 5. Las 20 Estrellas Orbitantes
+        const orbitingStars = [];
+        const numStars = 20;
+
+        for (let i = 0; i < numStars; i++) {
+            const orbitRadius = 110 + (i * 22) + (Math.random() * 10 - 5);
+            const speed = (0.0028 - (i * 0.00007));
+            const isGold = i % 2 === 0;
+
+            orbitingStars.push({
+                id: i + 1,
+                radius: orbitRadius,
+                angle: (i * (Math.PI * 2 / numStars)) + Math.random() * 0.4,
+                speed: speed,
+                size: Math.random() * 2 + 5,
+                phrase: phrases[i],
+                primaryColor: isGold ? '#FDE047' : '#F472B6',
+                secondaryColor: isGold ? '#F59E0B' : '#EC4899',
+                glowColor: isGold ? 'rgba(253, 224, 71, 0.9)' : 'rgba(244, 114, 182, 0.9)',
+                pulse: Math.random() * Math.PI,
+                trail: [],
+                currentX: 0,
+                currentY: 0
+            });
+        }
+
+        // 6. Estrella Central Especial
+        const centralStar = {
+            size: 34,
+            pulse: 0,
+            ringAngle1: 0,
+            ringAngle2: 0,
+            currentX: 0,
+            currentY: 0
+        };
+
+        // --- SISTEMA DE EVENTOS MOUSE / TOUCH ---
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.target !== canvas) return;
+            isDragging = true;
+            dragStartX = e.clientX - targetOffsetX;
+            dragStartY = e.clientY - targetOffsetY;
+            velX = 0; velY = 0;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            const coords = getCanvasCoords(e);
+            checkHover(coords);
+
+            if (!isDragging) return;
+            const newTargetX = e.clientX - dragStartX;
+            const newTargetY = e.clientY - dragStartY;
+            velX = newTargetX - targetOffsetX;
+            velY = newTargetY - targetOffsetY;
+            targetOffsetX = newTargetX;
+            targetOffsetY = newTargetY;
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        let lastTouchDist = 0;
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                dragStartX = e.touches[0].clientX - targetOffsetX;
+                dragStartY = e.touches[0].clientY - targetOffsetY;
+                velX = 0; velY = 0;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                lastTouchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const newTargetX = e.touches[0].clientX - dragStartX;
+                const newTargetY = e.touches[0].clientY - dragStartY;
+                velX = newTargetX - targetOffsetX;
+                velY = newTargetY - targetOffsetY;
+                targetOffsetX = newTargetX;
+                targetOffsetY = newTargetY;
+            } else if (e.touches.length === 2) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const delta = dist - lastTouchDist;
+                targetZoom += delta * 0.005;
+                targetZoom = Math.min(Math.max(0.4, targetZoom), 2.8);
+                lastTouchDist = dist;
+            }
+        });
+
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        window.addEventListener('wheel', (e) => {
+            targetZoom += e.deltaY * -0.0012;
+            targetZoom = Math.min(Math.max(0.4, targetZoom), 2.8);
+        }, { passive: true });
+
+        function checkHover(coords) {
+            const adjX = (coords.x - centerX - offsetX) / zoom + centerX;
+            const adjY = (coords.y - centerY - offsetY) / zoom + centerY;
+
+            const distCentral = Math.hypot(adjX - centralStar.currentX, adjY - centralStar.currentY);
+            if (distCentral < centralStar.size + 20) {
+                hoveredStar = { type: 'central', data: centralStarData };
+                canvas.style.cursor = 'pointer';
+                return;
+            }
+
+            for (let star of orbitingStars) {
+                const dist = Math.hypot(adjX - star.currentX, adjY - star.currentY);
+                if (dist < star.size + 15) {
+                    hoveredStar = { type: 'orbiting', data: star };
+                    canvas.style.cursor = 'pointer';
+                    return;
+                }
+            }
+
+            hoveredStar = null;
+            canvas.style.cursor = 'grab';
+        }
+
+        function handleClick(e) {
+            const coords = getCanvasCoords(e);
+            const adjX = (coords.x - centerX - offsetX) / zoom + centerX;
+            const adjY = (coords.y - centerY - offsetY) / zoom + centerY;
+
+            const distCentral = Math.hypot(adjX - centralStar.currentX, adjY - centralStar.currentY);
+            if (distCentral < centralStar.size + 20) {
+                openModal("Alexandra", centralStarData.title, centralStarData.message);
+                return;
+            }
+
+            for (let star of orbitingStars) {
+                const dist = Math.hypot(adjX - star.currentX, adjY - star.currentY);
+                if (dist < star.size + 15) {
+                    openModal(`Estrella #${star.id}`, "Una razón para amarte", `"${star.phrase}"`);
+                    return;
+                }
+            }
+        }
+
+        canvas.addEventListener('click', handleClick);
+
+        const modal = document.getElementById('cardModal');
+        const modalSub = document.getElementById('modalSub');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModalBtn = document.getElementById('closeModal');
+
+        function openModal(sub, title, text) {
+            modalSub.innerText = sub;
+            modalTitle.innerText = title;
+            modalMessage.innerText = text;
+            modal.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+            modal.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+        }
+
+        function closeModal() {
+            modal.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+            modal.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.getElementById('resetCamBtn').addEventListener('click', () => {
+            targetZoom = 1.0;
+            targetOffsetX = 0;
+            targetOffsetY = 0;
+        });
+
+        function drawNebulae() {
+            nebulae.forEach(n => {
+                n.alpha += Math.sin(Date.now() * n.pulseSpeed) * 0.0005;
+                const grad = ctx.createRadialGradient(
+                    centerX + n.x, centerY + n.y, 0,
+                    centerX + n.x, centerY + n.y, n.radius
+                );
+                grad.addColorStop(0, `${n.color}${n.alpha})`);
+                grad.addColorStop(0.5, `${n.color}${n.alpha * 0.4})`);
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(centerX + n.x, centerY + n.y, n.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawComets() {
+            if (Math.random() < 0.02 && comets.length < 3) {
+                createComet();
+            }
+
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i];
+                c.x += c.vx;
+                c.y += c.vy;
+                c.alpha -= c.decay;
+
+                if (c.alpha <= 0) {
+                    comets.splice(i, 1);
+                    continue;
+                }
+
+                const tailX = c.x - c.vx * (c.length / 10);
+                const tailY = c.y - c.vy * (c.length / 10);
+
+                const grad = ctx.createLinearGradient(c.x, c.y, tailX, tailY);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${c.alpha})`);
+                grad.addColorStop(0.3, `rgba(244, 114, 182, ${c.alpha * 0.6})`);
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = c.size;
+                ctx.beginPath();
+                ctx.moveTo(c.x, c.y);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${c.alpha})`;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.size * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawLensFlare(x, y, size) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+
+            const grad1 = ctx.createLinearGradient(x - size * 4, y, x + size * 4, y);
+            grad1.addColorStop(0, 'rgba(255,215,128,0)');
+            grad1.addColorStop(0.5, 'rgba(255,235,200,0.85)');
+            grad1.addColorStop(1, 'rgba(255,215,128,0)');
+
+            ctx.fillStyle = grad1;
+            ctx.fillRect(x - size * 4, y - 1.5, size * 8, 3);
+
+            const grad2 = ctx.createLinearGradient(x, y - size * 4, x, y + size * 4);
+            grad2.addColorStop(0, 'rgba(255,215,128,0)');
+            grad2.addColorStop(0.5, 'rgba(255,235,200,0.85)');
+            grad2.addColorStop(1, 'rgba(255,215,128,0)');
+
+            ctx.fillStyle = grad2;
+            ctx.fillRect(x - 1.5, y - size * 4, 3, size * 8);
+
+            ctx.restore();
+        }
+
+        // --- BUCLE PRINCIPAL DE ANIMACIÓN ---
+        function render() {
+            if (!isDragging) {
+                targetOffsetX += velX;
+                targetOffsetY += velY;
+                velX *= 0.92;
+                velY *= 0.92;
+            }
+
+            zoom += (targetZoom - zoom) * 0.08;
+            offsetX += (targetOffsetX - offsetX) * 0.08;
+            offsetY += (targetOffsetY - offsetY) * 0.08;
+
+            ctx.fillStyle = '#020008';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.save();
+
+            ctx.translate(centerX + offsetX, centerY + offsetY);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-centerX, -centerY);
+
+            drawNebulae();
+
+            bgStars.forEach(star => {
+                star.alpha += Math.sin(Date.now() * star.twinkleSpeed) * 0.01;
+                const a = Math.max(0.1, Math.min(1, star.alpha));
+                ctx.fillStyle = star.color;
+                ctx.globalAlpha = a;
+                ctx.beginPath();
+                ctx.arc(centerX + star.x, centerY + star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+
+            drawComets();
+
+            spiralParticles.forEach(p => {
+                p.angle += p.speed;
+                const x = centerX + Math.cos(p.angle) * p.distance;
+                const y = centerY + Math.sin(p.angle) * p.distance;
+
+                ctx.fillStyle = `${p.color}${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            orbitingStars.forEach(star => {
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.08)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, star.radius, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+
+            orbitingStars.forEach(star => {
+                star.angle += star.speed;
+                star.pulse += 0.04;
+
+                const x = centerX + Math.cos(star.angle) * star.radius;
+                const y = centerY + Math.sin(star.angle) * star.radius;
+
+                star.currentX = x;
+                star.currentY = y;
+
+                star.trail.push({ x: x, y: y, alpha: 0.8 });
+                if (star.trail.length > 12) star.trail.shift();
+
+                for (let t = 0; t < star.trail.length; t++) {
+                    const point = star.trail[t];
+                    point.alpha -= 0.05;
+                    ctx.fillStyle = `${star.secondaryColor}${Math.max(0, point.alpha * 0.4)})`;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, star.size * (t / star.trail.length) * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const isHovered = hoveredStar && hoveredStar.data === star;
+                const pulseSize = (star.size + Math.sin(star.pulse) * 1.5) * (isHovered ? 1.4 : 1.0);
+
+                const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, pulseSize * 4);
+                glowGrad.addColorStop(0, star.glowColor);
+                glowGrad.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = glowGrad;
+                ctx.beginPath();
+                ctx.arc(x, y, pulseSize * 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(x, y, pulseSize * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (isHovered) {
+                    drawLensFlare(x, y, pulseSize * 2.5);
+                }
+            });
+
+            // ESTRELLA CENTRAL: "ALEXANDRA"
+            centralStar.pulse += 0.025;
+            centralStar.ringAngle1 += 0.008;
+            centralStar.ringAngle2 -= 0.005;
+            centralStar.currentX = centerX;
+            centralStar.currentY = centerY;
+
+            const isCentralHovered = hoveredStar && hoveredStar.type === 'central';
+            const coreSize = (centralStar.size + Math.sin(centralStar.pulse) * 3) * (isCentralHovered ? 1.15 : 1.0);
+
+            const centralBloom = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreSize * 6);
+            centralBloom.addColorStop(0, 'rgba(255, 220, 130, 0.95)');
+            centralBloom.addColorStop(0.3, 'rgba(236, 72, 153, 0.5)');
+            centralBloom.addColorStop(0.7, 'rgba(147, 51, 234, 0.2)');
+            centralBloom.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = centralBloom;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreSize * 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+
+            ctx.rotate(centralStar.ringAngle1);
+            ctx.strokeStyle = 'rgba(255, 215, 128, 0.5)';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, coreSize * 2.8, coreSize * 1.1, Math.PI / 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.rotate(centralStar.ringAngle2);
+            ctx.strokeStyle = 'rgba(244, 114, 182, 0.4)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, coreSize * 3.4, coreSize * 1.3, -Math.PI / 3, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+
+            const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreSize);
+            coreGradient.addColorStop(0, '#FFFFFF');
+            coreGradient.addColorStop(0.4, '#FDE047');
+            coreGradient.addColorStop(1, '#EC4899');
+
+            ctx.fillStyle = coreGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            drawLensFlare(centerX, centerY, coreSize * 3.5);
+
+            ctx.shadowColor = 'rgba(236, 72, 153, 0.9)';
+            ctx.shadowBlur = 18;
+            ctx.font = '600 20px "Cinzel", serif';
+            ctx.fillStyle = '#FEF08A';
+            ctx.textAlign = 'center';
+            ctx.fillText('✦ Alexandra ✦', centerX, centerY + coreSize + 34);
+
+            ctx.shadowBlur = 0;
+
+            ctx.restore();
+
+            requestAnimationFrame(render);
+        }
+
+        window.onload = function() {
+            render();
+        };
+    </script>
+</body>
+</html>
